@@ -5,9 +5,10 @@
             [leiningen.leinsync.utils :as u]
             [digest :as d]
             [leiningen.core.main :as m]
-            [leiningen.leinsync.table-pretty-print :as pp]))
+            [leiningen.leinsync.table-pretty-print :as pp]
+            [leiningen.leinsync.git :as git]))
 
-(def hash-length 6)
+(def hash-length 10000)
 (def all-resources-different-marker "==> ")
 (def one-resource-different-marker "=[x]=> ")
 (def empty-occurence-str "X ")
@@ -28,13 +29,14 @@
 
 (defn md5-hash [paths]
   (str/join " | " (map
-                   #(d/digest "md5" (io/as-file %))
-                   paths)))
+                    #(d/digest "md5" (io/as-file %))
+                    paths)))
 
 (defn resource-render [paths project]
   (if (empty? paths)
     {project empty-occurence-str}
-    {project (md5-hash paths)}))
+    {project {:md5       (md5-hash paths)
+              :timestamp "2015-1-1"}}))
 
 (defn resource-occurence [resource project project-desc render]
   (let [paths (concat (ns/resource->target-path resource (name project) project-desc)
@@ -49,12 +51,12 @@
 
 (defn resource-name->project [projects selector render]
   (reduce-kv
-   (fn [m project desc]
-     (into m (map
-              (resource->project project desc render)
-              (get-in desc selector))))
-   []
-   projects))
+    (fn [m project desc]
+      (into m (map
+                (resource->project project desc render)
+                (get-in desc selector))))
+    []
+    projects))
 
 (defn resource->package-and-name [k selector]
   (if (= selector ns/namespace-def)
@@ -67,7 +69,7 @@
   ([marker v]
    (if (empty? v)
      ""
-     {:marker marker :value (str/upper-case v)}))
+     {:marker marker :value v}))
   ([assertion-marker standard-marker assertion v]
    (if (assertion v)
      (mark-value-with assertion-marker v)
@@ -101,6 +103,7 @@
 (defn unterline-different-values [m]
   (let [unique-v (->> m
                       (vals)
+                      (map :md5)
                       (filter not-empty)
                       (distinct))]
     (cond
@@ -112,22 +115,24 @@
   (subs hash-str 0 (min desired-length (count hash-str))))
 
 (defn display-hash-value [v desired-length]
+  (println  "==total==" v)
   (zipmap (keys v)
           (map (fn [x]
+                 (println  "====" x)
                  (if (map? x)
-                   (str (:marker x) (sub-hash-str (:value x) desired-length))
+                   (str (:marker x) (sub-hash-str (:md5 x) desired-length))
                    (sub-hash-str x desired-length)))
                (vals v))))
 
 (defn pretty-print-structure [data selector desired-length]
   (reduce-kv
-   (fn [m k v] (conj m (merge
-                        (resource->package-and-name k selector)
-                        (-> v
-                            (unterline-different-values)
-                            (display-hash-value desired-length)))))
-   []
-   data))
+    (fn [m k v] (conj m (merge
+                          (resource->package-and-name k selector)
+                          (-> v
+                              (unterline-different-values)
+                              (display-hash-value desired-length)))))
+    []
+    data))
 
 (defn build-resource-table [projects selector render]
   (-> projects

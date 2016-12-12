@@ -112,11 +112,11 @@
 
 (defn get-details-status [status-lines projects-desc]
   (let [sync-resources (filter
-                        #(ns/sync-resources? projects-desc (remove-git-status %))
-                        status-lines)
+                         #(ns/sync-resources? projects-desc (remove-git-status %))
+                         status-lines)
         other-resources (filter
-                         #(and (not (u/lazy-contains? sync-resources %)) (seq %))
-                         status-lines)]
+                          #(and (not (u/lazy-contains? sync-resources %)) (seq %))
+                          status-lines)]
     (if (> (count sync-resources) other-change-list-limit)
       (merge (sync-change sync-resources) (other-change-status other-resources true))
       (merge (sync-change sync-resources) (other-change-status other-resources false)))))
@@ -126,7 +126,7 @@
     (if (u/is-success? status-result)
       (merge {:project project}
              (get-details-status
-              (u/split-output-of status-result) projects-desc))
+               (u/split-output-of status-result) projects-desc))
       {:project project
        :status  (status-failed)})))
 
@@ -160,3 +160,6 @@
                                                 :commit-message commit-msg
                                                 :cause          add-status}
       :else (commit! project commit-msg))))
+
+(defn last-commit-date [file]
+  (u/output-of (sh/sh "/bin/bash" "-c" (str " git --no-pager log -1 --date=short --pretty=format:%cd " file))))
