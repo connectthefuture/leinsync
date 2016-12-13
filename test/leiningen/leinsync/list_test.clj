@@ -5,19 +5,26 @@
 
 (defn- project-occurence-render [existing-path project]
   (if (empty? existing-path)
-    {project "O X"}
-    {project "  X"}))
+    {project {:md5 "O X"}}
+    {project {:md5 "  X"}}))
 
 (deftest ^:unit unterline-different-values
   (testing "all resources are different"
-    (let [m {:a "1", :b "2", :c "1", :d "2"}]
+    (let [m {:a {:md5 "1"}
+             :b {:md5 "2"}
+             :c {:md5 "1"}
+             :d {:md5 "2"}}]
       (is (= {:a (l/mark-value-with l/all-resources-different-marker (:a m))
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
               :d (l/mark-value-with l/all-resources-different-marker (:d m))}
              (l/unterline-different-values m))))
 
-    (let [m {:a "1" :b "1" :c "1" :d "2" :e "2"}]
+    (let [m {:a {:md5 "1"}
+             :b {:md5 "1"}
+             :c {:md5 "1"}
+             :d {:md5 "2"}
+             :e {:md5 "2"}}]
       (is (= {:a (l/mark-value-with l/all-resources-different-marker (:a m))
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
@@ -26,7 +33,10 @@
              (l/unterline-different-values m)))))
 
   (testing "one resources is different"
-    (let [m {:a "1" :b "1" :c "1" :d "2"}]
+    (let [m {:a {:md5 "1"}
+             :b {:md5 "1"}
+             :c {:md5 "1"}
+             :d {:md5 "2"}}]
       (is (= {:a (l/mark-value-with l/all-resources-different-marker (:a m))
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
@@ -34,7 +44,11 @@
              (l/unterline-different-values m)))))
 
   (testing "edge case where one project does not has this namespace"
-    (let [m {:a "1" :b "1" :c "1" :d "2" :e ""}]
+    (let [m {:a {:md5 "1"}
+             :b {:md5 "1"}
+             :c {:md5 "1"}
+             :d {:md5 "2"}
+             :3 {:md5 ""}}]
       (is (= {:a (l/mark-value-with l/all-resources-different-marker (:a m))
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
@@ -60,25 +74,29 @@
 
 (deftest ^:unit resource-render
   (is (= {:a "X "} (l/resource-render [] :a)))
-  (is (= {:a {:md5 "a1805c81c8ca105a0718db9fa914a3a9", :timestamp "2016-07-07"}}
+  (is (= {:a {:md5       "a1805c81c8ca105a0718db9fa914a3a9"
+              :timestamp "2016-07-07"}}
          (l/resource-render ["test-resources/dummy.clj"] :a))))
 
 (deftest ^:unit display-hash-value
   (is (= {:k1 "1234567"
-          :k2 "=> 1234567"}
+          :k2 "=> (2016-07-07) a1805c8"}
          (l/display-hash-value
-          {:k1 "12345678"
-           :k2 {:marker "=> " :value "123456789"}}
-          7))))
+           {:k1 {:md5 "12345678", :timestamp "2016-06-07"}
+            :k2 {:marker "=> " :value {:md5       "a1805c81c8ca105a0718db9fa914a3a9"
+                                       :timestamp "2016-07-07"}}}
+           7))))
 
 (deftest ^:unit mark-as-diffrent
-  (is (= {:k1 {:marker "==> " :value "12345678"}
+  (is (= {:k1 {:marker "==> " :value "12345678"},
           :k2 {:marker "==> " :value "123456789"}}
          (l/mark-as-diffrent {:k1 "12345678"
                               :k2 "123456789"})))
 
-  (is (= {:k1 {:marker "=[x]=> ", :value "FOO"}
-          :k2 {:marker "==> ", :value "BAR"}}
+  (is (= {:k1 {:marker "=[x]=> "
+               :value  "foo"}
+          :k2 {:marker "==> "
+               :value  "bar"}}
          (l/mark-as-diffrent {:k1 "foo"
                               :k2 "bar"}
                              #(= "foo" %)))))

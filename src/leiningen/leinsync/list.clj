@@ -36,7 +36,7 @@
   (if (empty? paths)
     {project empty-occurence-str}
     {project {:md5       (md5-hash paths)
-              :timestamp "2015-1-1"}}))
+              :timestamp (git/last-commit-date (first paths))}}))
 
 (defn resource-occurence [resource project project-desc render]
   (let [paths (concat (ns/resource->target-path resource (name project) project-desc)
@@ -115,13 +115,14 @@
   (subs hash-str 0 (min desired-length (count hash-str))))
 
 (defn display-hash-value [v desired-length]
-  (println  "==total==" v)
   (zipmap (keys v)
           (map (fn [x]
-                 (println  "====" x)
-                 (if (map? x)
-                   (str (:marker x) (sub-hash-str (:md5 x) desired-length))
-                   (sub-hash-str x desired-length)))
+                 (if (contains? x :marker)
+                   (str
+                     (:marker x)
+                     "(" (get-in x [:value :timestamp]) ") "
+                     (sub-hash-str (get-in x [:value :md5]) desired-length))
+                   (sub-hash-str (:md5 x) desired-length)))
                (vals v))))
 
 (defn pretty-print-structure [data selector desired-length]
