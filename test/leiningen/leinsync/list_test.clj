@@ -48,7 +48,7 @@
              :b {:md5 "1"}
              :c {:md5 "1"}
              :d {:md5 "2"}
-             :3 {:md5 ""}}]
+             :e ""}]
       (is (= {:a (l/mark-value-with l/all-resources-different-marker (:a m))
               :b (l/mark-value-with l/all-resources-different-marker (:b m))
               :c (l/mark-value-with l/all-resources-different-marker (:c m))
@@ -57,7 +57,7 @@
              (l/unterline-different-values m)))))
 
   (testing "edge case 2 different entries"
-    (let [m {:a "1" :b "2"}]
+    (let [m {:a {:md5 "1"} :b {:md5 "2"}}]
       (is (= {:a (l/mark-value-with l/one-resource-different-marker (:a m))
               :b (l/mark-value-with l/one-resource-different-marker (:b m))}
              (l/unterline-different-values m))))))
@@ -82,60 +82,59 @@
   (is (= {:k1 "1234567"
           :k2 "=> 2016-07-07 a1805c8"}
          (l/display-hash-value
-           {:k1 {:md5 "12345678", :timestamp "2016-06-07"}
-            :k2 {:marker "=> " :value {:md5       "a1805c81c8ca105a0718db9fa914a3a9"
-                                       :timestamp "2016-07-07"}}}
-           7))))
+          {:k1 {:md5 "12345678", :timestamp "2016-06-07"}
+           :k2 {:marker "=> " :value {:md5       "a1805c81c8ca105a0718db9fa914a3a9"
+                                      :timestamp "2016-07-07"}}}
+          7))))
 
 (deftest ^:unit mark-as-diffrent
-  (is (= {:k1 {:marker "=> " :value "12345678"},
-          :k2 {:marker "=> " :value "123456789"}}
-         (l/mark-as-diffrent {:k1 "12345678"
-                              :k2 "123456789"})))
-
+  (is (= {:k1 {:marker "=> " :value {:md5 "12345678"}},
+          :k2 {:marker "=> " :value {:md5 "123456789"}}}
+         (l/mark-as-diffrent {:k1 {:md5 "12345678"}
+                              :k2 {:md5 "123456789"}})))
   (is (= {:k1 {:marker "[x]=> "
-               :value  "foo"}
+               :value  {:md5 "foo"}}
           :k2 {:marker "=> "
-               :value  "bar"}}
-         (l/mark-as-diffrent {:k1 "foo"
-                              :k2 "bar"}
-                             #(= "foo" %)))))
+               :value  {:md5 "bar"}}}
+         (l/mark-as-diffrent {:k1 {:md5 "foo"}
+                              :k2 {:md5 "bar"}}
+                             #(= "foo" (:md5 %))))))
 
 (deftest ^:unit mark-2-different-values
   (let [marker-fn (fn ([_] {}) ([_ a] {:assertion a}))]
     (testing "if frequency of both vals > 1, no need to mark"
-      (let [result (l/mark-2-different-values {:k1 "1"
-                                               :k2 "1"
-                                               :k3 "2"
-                                               :k4 "2"}
+      (let [result (l/mark-2-different-values {:k1 {:md5 "1"}
+                                               :k2 {:md5 "1"}
+                                               :k3 {:md5 "2"}
+                                               :k4 {:md5 "2"}}
                                               ["1" "2"]
                                               marker-fn)]
         (is (true? (empty? result)))))
 
     (testing "if both vals exist just onetime, mark all of them"
-      (let [{assertion :assertion} (l/mark-2-different-values {:k1 "1"
-                                                               :k2 "2"}
+      (let [{assertion :assertion} (l/mark-2-different-values {:k1 {:md5 "1"}
+                                                               :k2 {:md5 "2"}}
                                                               ["1" "2"]
                                                               marker-fn)]
-        (is (true? (assertion "1")))
-        (is (true? (assertion "2")))))
+        (is (true? (assertion {:md5 "1"})))
+        (is (true? (assertion {:md5 "2"})))))
 
     (testing "mark val whose frequency = 1 "
-      (let [{assertion :assertion} (l/mark-2-different-values {:k1 "1"
-                                                               :k2 "1"
-                                                               :k3 "2"}
+      (let [{assertion :assertion} (l/mark-2-different-values {:k1 {:md5 "1"}
+                                                               :k2 {:md5 "1"}
+                                                               :k3 {:md5 "2"}}
                                                               ["1" "2"]
                                                               marker-fn)]
-        (is (false? (assertion "1")))
-        (is (true? (assertion "2"))))
+        (is (false? (assertion {:md5 "1"})))
+        (is (true? (assertion {:md5 "2"}))))
 
-      (let [{assertion :assertion} (l/mark-2-different-values {:k1 "1"
-                                                               :k2 "2"
-                                                               :k3 "2"}
+      (let [{assertion :assertion} (l/mark-2-different-values {:k1 {:md5 "1"}
+                                                               :k2 {:md5 "2"}
+                                                               :k3 {:md5 "2"}}
                                                               ["1" "2"]
                                                               marker-fn)]
-        (is (true? (assertion "1")))
-        (is (false? (assertion "2")))))))
+        (is (true? (assertion {:md5 "1"})))
+        (is (false? (assertion {:md5 "2"})))))))
 
 (deftest ^:unit build-resource-table
   (testing "print table structure for the namespaces"

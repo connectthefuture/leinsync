@@ -9,7 +9,7 @@
            (java.io File)
            (java.util Properties)))
 
-(def verbose true)
+(def verbose false)
 
 (defn change-dir-to [relative-path]
   (let [absolute-path (.getCanonicalPath (new File relative-path))]

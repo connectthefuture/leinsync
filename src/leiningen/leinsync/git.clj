@@ -113,11 +113,11 @@
 
 (defn get-details-status [status-lines projects-desc]
   (let [sync-resources (filter
-                         #(ns/sync-resources? projects-desc (remove-git-status %))
-                         status-lines)
+                        #(ns/sync-resources? projects-desc (remove-git-status %))
+                        status-lines)
         other-resources (filter
-                          #(and (not (u/lazy-contains? sync-resources %)) (seq %))
-                          status-lines)]
+                         #(and (not (u/lazy-contains? sync-resources %)) (seq %))
+                         status-lines)]
     (if (> (count sync-resources) other-change-list-limit)
       (merge (sync-change sync-resources) (other-change-status other-resources true))
       (merge (sync-change sync-resources) (other-change-status other-resources false)))))
@@ -127,7 +127,7 @@
     (if (u/is-success? status-result)
       (merge {:project project}
              (get-details-status
-               (u/split-output-of status-result) projects-desc))
+              (u/split-output-of status-result) projects-desc))
       {:project project
        :status  (status-failed)})))
 
@@ -167,5 +167,5 @@
         name-segments (str/split absolute-path #"/")
         git-folder (str/join "/" (drop-last name-segments))]
     (u/output-of
-      (sh/sh "/bin/bash" "-c"
-             (str " git -C " git-folder " --no-pager log -1 --date=short --pretty=format:%cd " absolute-path)))))
+     (sh/sh "/bin/bash" "-c"
+            (str " git -C " git-folder " --no-pager log -1 --date=short --pretty=format:%cd " absolute-path)))))

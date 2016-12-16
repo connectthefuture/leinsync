@@ -29,8 +29,8 @@
 
 (defn md5-hash [paths]
   (str/join " | " (map
-                    #(d/digest "md5" (io/as-file %))
-                    paths)))
+                   #(d/digest "md5" (io/as-file %))
+                   paths)))
 
 (defn resource-render [paths project]
   (if (empty? paths)
@@ -51,12 +51,12 @@
 
 (defn resource-name->project [projects selector render]
   (reduce-kv
-    (fn [m project desc]
-      (into m (map
-                (resource->project project desc render)
-                (get-in desc selector))))
-    []
-    projects))
+   (fn [m project desc]
+     (into m (map
+              (resource->project project desc render)
+              (get-in desc selector))))
+   []
+   projects))
 
 (defn resource->package-and-name [k selector]
   (if (= selector ns/namespace-def)
@@ -90,14 +90,14 @@
                 (vals m)))))
 
 (defn mark-2-different-values [m [first-v second-v] marker-fn]
-  (let [not-empty-values (remove empty? (vals m))
+  (let [not-empty-values (remove empty? (map :md5 (vals m)))
         first-freq (count (filter #(= first-v %) not-empty-values))
         second-freq (count (filter #(= second-v %) not-empty-values))]
     (cond
       (and (not= first-freq 1) (not= second-freq 1)) (marker-fn m)
-      (= first-freq second-freq) (marker-fn m #(or (= % first-v) (= % second-v)))
-      (> first-freq second-freq) (marker-fn m #(= % second-v))
-      (< first-freq second-freq) (marker-fn m #(= % first-v))
+      (= first-freq second-freq) (marker-fn m #(or (= (:md5 %) first-v) (= (:md5 %) second-v)))
+      (> first-freq second-freq) (marker-fn m #(= (:md5 %) second-v))
+      (< first-freq second-freq) (marker-fn m #(= (:md5 %) first-v))
       :else m)))
 
 (defn unterline-different-values [m]
@@ -119,21 +119,21 @@
           (map (fn [x]
                  (if (contains? x :marker)
                    (str
-                     (:marker x)
-                     (get-in x [:value :timestamp]) " "
-                     (sub-hash-str (get-in x [:value :md5]) desired-length))
+                    (:marker x)
+                    (get-in x [:value :timestamp]) " "
+                    (sub-hash-str (get-in x [:value :md5]) desired-length))
                    (sub-hash-str (:md5 x) desired-length)))
                (vals v))))
 
 (defn pretty-print-structure [data selector desired-length]
   (reduce-kv
-    (fn [m k v] (conj m (merge
-                          (resource->package-and-name k selector)
-                          (-> v
-                              (unterline-different-values)
-                              (display-hash-value desired-length)))))
-    []
-    data))
+   (fn [m k v] (conj m (merge
+                        (resource->package-and-name k selector)
+                        (-> v
+                            (unterline-different-values)
+                            (display-hash-value desired-length)))))
+   []
+   data))
 
 (defn build-resource-table [projects selector render]
   (-> projects
@@ -146,8 +146,8 @@
   (m/info "     -" empty-occurence-str
           "                        :  the namespace/resource does not exist in the project although it has been specified")
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     =>    hash : means that the resource doesn't match on all projects")
-  (m/info "                                     [x]=> hash : means that the resource on this project is different from others")
+  (m/info "                                     =>    last-commit-date hash : means that the resource doesn't match on all projects")
+  (m/info "                                     [x]=> last-commit-date hash : means that the resource on this project is different from others")
   (pp/print-compact-table (sort-by :name m)))
 
 (defn list-resources [projects-desc selector]
