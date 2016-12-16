@@ -8,9 +8,9 @@
             [leiningen.leinsync.table-pretty-print :as pp]
             [leiningen.leinsync.git :as git]))
 
-(def hash-length 10000)
-(def all-resources-different-marker "==> ")
-(def one-resource-different-marker "=[x]=> ")
+(def hash-length 5)
+(def all-resources-different-marker "=> ")
+(def one-resource-different-marker "[x]=> ")
 (def empty-occurence-str "X ")
 
 (defn aggregate [result [namespace project]]
@@ -120,7 +120,7 @@
                  (if (contains? x :marker)
                    (str
                      (:marker x)
-                     "(" (get-in x [:value :timestamp]) ") "
+                     (get-in x [:value :timestamp]) " "
                      (sub-hash-str (get-in x [:value :md5]) desired-length))
                    (sub-hash-str (:md5 x) desired-length)))
                (vals v))))
@@ -146,8 +146,8 @@
   (m/info "     -" empty-occurence-str
           "                        :  the namespace/resource does not exist in the project although it has been specified")
   (m/info "     - hash-value (.i.e ddfa3d66) :  the namespace/resource is defined in the project.clj")
-  (m/info "                                     ==>    hash : means that the resource doesn't match on all projects")
-  (m/info "                                     =[x]=> hash : means that the resource on this project is different from others")
+  (m/info "                                     =>    hash : means that the resource doesn't match on all projects")
+  (m/info "                                     [x]=> hash : means that the resource on this project is different from others")
   (pp/print-compact-table (sort-by :name m)))
 
 (defn list-resources [projects-desc selector]

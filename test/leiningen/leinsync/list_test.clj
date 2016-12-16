@@ -80,7 +80,7 @@
 
 (deftest ^:unit display-hash-value
   (is (= {:k1 "1234567"
-          :k2 "=> (2016-07-07) a1805c8"}
+          :k2 "=> 2016-07-07 a1805c8"}
          (l/display-hash-value
            {:k1 {:md5 "12345678", :timestamp "2016-06-07"}
             :k2 {:marker "=> " :value {:md5       "a1805c81c8ca105a0718db9fa914a3a9"
@@ -88,14 +88,14 @@
            7))))
 
 (deftest ^:unit mark-as-diffrent
-  (is (= {:k1 {:marker "==> " :value "12345678"},
-          :k2 {:marker "==> " :value "123456789"}}
+  (is (= {:k1 {:marker "=> " :value "12345678"},
+          :k2 {:marker "=> " :value "123456789"}}
          (l/mark-as-diffrent {:k1 "12345678"
                               :k2 "123456789"})))
 
-  (is (= {:k1 {:marker "=[x]=> "
+  (is (= {:k1 {:marker "[x]=> "
                :value  "foo"}
-          :k2 {:marker "==> "
+          :k2 {:marker "=> "
                :value  "bar"}}
          (l/mark-as-diffrent {:k1 "foo"
                               :k2 "bar"}
